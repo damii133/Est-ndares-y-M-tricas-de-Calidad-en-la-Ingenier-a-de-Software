@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNEAKER POINT — Estándares y Métricas de Calidad</title>
+<style>
+:root{
+  --bg:#0f172a;
+  --panel:#111827;
+  --panel2:#182235;
+  --text:#f8fafc;
+  --muted:#cbd5e1;
+  --accent:#38bdf8;
+  --accent2:#22c55e;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --line:#334155;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+body{display:flex;align-items:stretch;justify-content:center}
+.deck{width:100vw;height:100vh;position:relative;overflow:hidden}
+.slide{
+  position:absolute;inset:0;
+  padding:7vh 7vw 10vh;
+  display:flex;flex-direction:column;justify-content:center;
+  opacity:0;transform:translateX(42px) scale(.985);
+  pointer-events:none;transition:.36s ease;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(56,189,248,.12), transparent 26%),
+    linear-gradient(145deg,#0f172a 0%,#111827 60%,#0b1220 100%);
+}
+.slide.active{opacity:1;transform:none;pointer-events:auto}
+.slide::after{
+  content:"";position:absolute;left:7vw;right:7vw;bottom:7.3vh;height:1px;background:var(--line)
+}
+.kicker{color:var(--accent);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:.88rem;margin-bottom:14px}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(2.8rem,6vw,6rem);line-height:.96;letter-spacing:-.05em;margin-bottom:24px}
+h2{font-size:clamp(2rem,4vw,4.2rem);line-height:1;letter-spacing:-.04em;margin-bottom:26px}
+h3{font-size:1.15rem;margin-bottom:8px}
+p{color:var(--muted);font-size:clamp(1rem,1.45vw,1.35rem);line-height:1.55}
+.subtitle{max-width:950px;font-size:clamp(1.1rem,1.8vw,1.55rem)}
+.accent{color:var(--accent)}
+.green{color:var(--accent2)}
+.small{font-size:.9rem;color:#94a3b8}
+.grid{display:grid;gap:18px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));
+  border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 12px 28px rgba(0,0,0,.18)
+}
+.card p{font-size:1rem;margin:0}
+.metric{display:flex;align-items:center;gap:16px}
+.metric .num{
+  min-width:76px;height:76px;border-radius:20px;display:grid;place-items:center;
+  background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);font-size:1.55rem;font-weight:900;color:var(--accent)
+}
+ul{margin:0;padding-left:1.2rem;color:var(--muted);font-size:1.05rem;line-height:1.55}
+li+li{margin-top:6px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
+table{width:100%;border-collapse:collapse;font-size:.9rem;background:rgba(255,255,255,.02)}
+th,td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(56,189,248,.08);color:#e0f2fe}
+td{color:#dbeafe}
+tr:last-child td{border-bottom:none}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-weight:800}
+.flow span{
+  padding:12px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)
+}
+.flow b{color:var(--accent);font-size:1.2rem}
+.formula{
+  margin-top:10px;padding:18px;border-left:4px solid var(--accent);
+  background:rgba(56,189,248,.08);border-radius:12px;font-family:Georgia,serif;font-size:1.3rem
+}
+.note{
+  margin-top:18px;padding:16px 18px;border-radius:14px;
+  background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);color:#fde68a
+}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:800;margin-right:7px}
+.crit{background:rgba(239,68,68,.16);color:#fecaca;border:1px solid rgba(239,68,68,.35)}
+.high{background:rgba(245,158,11,.15);color:#fde68a;border:1px solid rgba(245,158,11,.35)}
+.med{background:rgba(56,189,248,.13);color:#bae6fd;border:1px solid rgba(56,189,248,.32)}
+.low{background:rgba(34,197,94,.13);color:#bbf7d0;border:1px solid rgba(34,197,94,.32)}
+.nav{
+  position:absolute;z-index:20;left:7vw;right:7vw;bottom:2.1vh;
+  display:flex;align-items:center;justify-content:space-between;gap:16px
+}
+.nav .controls{display:flex;gap:8px}
+button{
+  appearance:none;border:1px solid var(--line);background:#111827;color:var(--text);
+  border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer
+}
+button:hover{border-color:var(--accent);color:var(--accent)}
+.progress{flex:1;height:6px;background:#1e293b;border-radius:999px;overflow:hidden;max-width:460px}
+.progress > div{height:100%;width:10%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+.counter{font-size:.9rem;color:#94a3b8;min-width:72px;text-align:right}
+.cover-mark{
+  position:absolute;right:7vw;top:8vh;width:150px;height:150px;border-radius:34px;
+  border:1px solid rgba(56,189,248,.25);background:linear-gradient(135deg,rgba(56,189,248,.18),rgba(34,197,94,.08));
+  display:grid;place-items:center;font-weight:900;font-size:2.4rem;color:var(--accent);transform:rotate(4deg)
+}
+.footer-tag{position:absolute;left:7vw;bottom:8.1vh;color:#64748b;font-size:.82rem}
+@media(max-width:900px){
+  .slide{padding:6vh 5vw 12vh}
+  .slide::after,.nav{left:5vw;right:5vw}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .cover-mark{display:none}
+  table{font-size:.78rem}
+  th,td{padding:9px}
+  .footer-tag{left:5vw}
+}
+@media print{
+  html,body{overflow:visible;background:#fff}
+  .deck{height:auto}
+  .slide{position:relative;opacity:1;transform:none;page-break-after:always;min-height:100vh;pointer-events:auto}
+  .nav{display:none}
+}
+
+/* Adaptación para tabletas y teléfonos */
+html, body { width: 100%; }
+.deck { height: 100vh; height: 100dvh; }
+.slide {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.table-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; }
+.nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  touch-action: manipulation;
+}
+button { min-height: 44px; min-width: 44px; }
+@media (min-width: 701px) and (max-width: 1100px) {
+  .slide {
+    padding: 5vh 5vw calc(108px + env(safe-area-inset-bottom, 0px));
+    justify-content: flex-start;
+  }
+  .slide::after { left: 5vw; right: 5vw; bottom: 92px; }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card { padding: 17px; }
+  .card p, ul { font-size: .96rem; }
+  .nav {
+    left: 0; right: 0; bottom: 0;
+    padding: 13px 5vw calc(13px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(0deg, #0f172a 78%, rgba(15,23,42,.92));
+  }
+  .footer-tag { position:static; margin-top:22px; }
+}
+@media (max-width: 700px) {
+  .slide {
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 18px
+             calc(108px + env(safe-area-inset-bottom, 0px));
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .slide::after, .cover-mark { display: none; }
+  .kicker { font-size: .68rem; letter-spacing: .1em; margin-bottom: 12px; }
+  h1 { font-size: clamp(2.3rem, 10vw, 3.4rem); margin-bottom: 16px; }
+  h2 { font-size: clamp(1.85rem, 7.5vw, 2.7rem); line-height: 1.08; margin-bottom: 20px; }
+  h3 { font-size: 1.03rem; }
+  p, .subtitle { font-size: .99rem; line-height: 1.5; }
+  .grid { gap: 12px; }
+  .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: 15px; border-radius: 14px; }
+  .card p, ul { font-size: .92rem; }
+  .metric { align-items: flex-start; gap: 12px; }
+  .metric .num {
+    min-width: 64px; width: 64px; height: 64px;
+    border-radius: 14px; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .flow { gap: 7px; }
+  .flow span { padding: 9px 11px; font-size: .81rem; }
+  .flow b { font-size: .9rem; }
+  .formula { font-size: 1rem; padding: 14px; overflow-wrap: anywhere; }
+  .note { padding: 13px; font-size: .85rem; line-height: 1.45; }
+  .table-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 0 -2px;
+  }
+  table { min-width: 690px; font-size: .79rem; }
+  th, td { padding: 10px; }
+  .nav {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(0deg, #0f172a 80%, rgba(15,23,42,.95));
+    border-top: 1px solid var(--line);
+  }
+  .nav .controls { width: 100%; justify-content: space-between; }
+  .nav button { padding: 10px 12px; font-size: .86rem; }
+  .progress { display: none; }
+  .counter { min-width: 48px; font-size: .78rem; }
+  .footer-tag { position: static; margin-top: 24px; font-size: .74rem; }
+}
+@media (max-width: 370px) {
+  .slide { padding-left: 12px; padding-right: 12px; }
+  .nav { padding-left: 9px; padding-right: 9px; gap: 6px; }
+  .nav button { padding: 9px; font-size: .78rem; }
+  .counter { min-width: 40px; }
+}
+@media (max-height: 580px) and (min-width: 701px) {
+  .slide { justify-content: flex-start; padding-top: 18px; padding-bottom: 100px; }
+  .nav { bottom: 0; padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+}
+@media print {
+  .deck { height: auto; }
+  .slide { overflow: visible; }
+}
+
+</style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide active">
+  <div class="cover-mark">SP</div>
+  <div class="kicker">Proyecto SNEAKER POINT</div>
+  <h1>SNEAKER POINT</h1>
+  <h2><span class="accent">Estándares y Métricas de Calidad</span><br>en la Ingeniería de Software</h2>
+  <p class="subtitle">Aplicación de estándares y métricas de calidad al desarrollo de una plataforma web B2B para proveedores de tenis y pequeños negocios.</p>
+  <div class="footer-tag">Presentación ejecutiva</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">01 · Contexto del proyecto</div>
+  <h2>¿Qué es SNEAKER POINT?</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Modelo de negocio</h3>
+      <p>Marketplace web <strong>B2B</strong> que conecta proveedores, mayoristas y distribuidores de tenis con pequeñas tiendas y negocios locales.</p>
+    </div>
+    <div class="card">
+      <h3>Funciones principales</h3>
+      <ul>
+        <li>Registro y autenticación por roles.</li>
+        <li>Gestión de proveedores y productos.</li>
+        <li>Búsqueda, filtros y comparación.</li>
+        <li>Pedidos mayoristas y seguimiento.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">La calidad debe acompañar todo el ciclo de vida del proyecto: planificación, desarrollo, pruebas, cambios y liberación.</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">02 · Marco de referencia</div>
+  <h2>Estándares y guías aplicables</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>ISO/IEC 25010</h3><p>Modelo central para definir y evaluar características de calidad del producto de software.</p></div>
+    <div class="card"><h3>ISO/IEC/IEEE 29119</h3><p>Referencia para procesos, documentación y actividades de pruebas de software.</p></div>
+    <div class="card"><h3>ISO/IEC/IEEE 12207</h3><p>Referencia para procesos del ciclo de vida: desarrollo, verificación, validación y mantenimiento.</p></div>
+    <div class="card"><h3>IEEE 730</h3><p>Guía para organizar responsabilidades y actividades de aseguramiento de calidad.</p></div>
+    <div class="card"><h3>OWASP</h3><p>Buenas prácticas para prevenir vulnerabilidades frecuentes en aplicaciones web.</p></div>
+    <div class="card"><h3>Aplicación</h3><p>No implica certificación: se utilizan como <strong>referentes técnicos</strong> para estructurar el marco de calidad.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="kicker">03 · ISO/IEC 25010</div>
+  <h2>Atributos de calidad priorizados</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>Adecuación funcional</h3><p>Que las funciones implementadas satisfagan los requisitos definidos.</p></div>
+    <div class="card"><h3>Seguridad</h3><p>Protección de cuentas, sesiones, roles, rutas y datos del sistema.</p></div>
+    <div class="card"><h3>Eficiencia de rendimiento</h3><p>Respuesta adecuada al consultar catálogo, filtros, proveedores y pedidos.</p></div>
+    <div class="card"><h3>Usabilidad</h3><p>Facilidad para que proveedores y tiendas completen tareas clave.</p></div>
+    <div class="card"><h3>Fiabilidad</h3><p>Funcionamiento estable durante flujos críticos y operaciones repetidas.</p></div>
+    <div class="card"><h3>Mantenibilidad</h3><p>Capacidad de corregir y evolucionar el sistema con control de cambios.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="kicker">04 · Métricas cuantitativas</div>
+  <h2>¿Cómo se mide la calidad?</h2>
+  <div class="grid grid-2">
+    <div class="card metric"><div class="num">≥95%</div><div><h3>Cumplimiento funcional</h3><p>Requisitos aprobados / requisitos implementados × 100</p></div></div>
+    <div class="card metric"><div class="num">100%</div><div><h3>Control de acceso</h3><p>Rutas privadas protegidas / rutas privadas identificadas × 100</p></div></div>
+    <div class="card metric"><div class="num">≤3 s</div><div><h3>Rendimiento</h3><p>Al menos 95% de operaciones críticas dentro del tiempo objetivo, bajo condiciones de prueba documentadas.</p></div></div>
+    <div class="card metric"><div class="num">≥90%</div><div><h3>Éxito de tareas</h3><p>Tareas completadas correctamente / tareas ejecutadas × 100</p></div></div>
+    <div class="card metric"><div class="num">≥95%</div><div><h3>Pruebas aprobadas</h3><p>Casos aprobados / casos ejecutados × 100</p></div></div>
+    <div class="card metric"><div class="num">100%</div><div><h3>Cambios revisados</h3><p>Cambios revisados / cambios integrados × 100</p></div></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="kicker">05 · Matriz consolidada</div>
+  <h2>Métricas y metas propuestas</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Característica</th><th>Métrica</th><th>Método</th><th>Meta</th></tr></thead>
+      <tbody>
+        <tr><td>MC-01</td><td>Adecuación funcional</td><td>Requisitos aprobados / implementados</td><td>Matriz requisitos-pruebas</td><td>≥ 95%</td></tr>
+        <tr><td>MC-02</td><td>Seguridad</td><td>Rutas privadas protegidas</td><td>Pruebas de autorización</td><td>100%</td></tr>
+        <tr><td>MC-03</td><td>Seguridad</td><td>Defectos críticos abiertos</td><td>Registro de bugs</td><td>0</td></tr>
+        <tr><td>MC-04</td><td>Rendimiento</td><td>Operaciones ≤ 3 s</td><td>Medición de tiempos</td><td>≥ 95%</td></tr>
+        <tr><td>MC-05</td><td>Usabilidad</td><td>Tareas completadas correctamente</td><td>Pruebas con usuarios</td><td>≥ 90%</td></tr>
+        <tr><td>MC-06</td><td>Fiabilidad</td><td>Casos de prueba aprobados</td><td>Reporte de testing</td><td>≥ 95%</td></tr>
+        <tr><td>MC-07</td><td>Mantenibilidad</td><td>Cambios revisados antes del merge</td><td>Pull Requests</td><td>100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">Las metas son propuestas para SNEAKER POINT. Los resultados reales deben obtenerse mediante pruebas y evidencia del proyecto; no deben inventarse.</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">06 · Gestión de defectos</div>
+  <h2>Control de errores y severidad</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Ciclo de un defecto</h3>
+      <div class="flow" style="margin-top:16px">
+        <span>Detectar</span><b>→</b><span>Registrar</span><b>→</b><span>Clasificar</span><b>→</b><span>Corregir</span><b>→</b><span>Retest</span><b>→</b><span>Cerrar</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Clasificación</h3>
+      <p><span class="badge crit">Crítica</span> Bloquea función esencial, compromete datos o seguridad.</p>
+      <p><span class="badge high">Alta</span> Afecta significativamente una función principal.</p>
+      <p><span class="badge med">Media</span> Impacto parcial; existe alternativa.</p>
+      <p><span class="badge low">Baja</span> Problema visual, textual o menor.</p>
+    </div>
+  </div>
+  <div class="formula">PDR = (Bugs resueltos / Bugs detectados) × 100</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">07 · Calidad como mecanismo de gestión</div>
+  <h2>De la norma a la decisión</h2>
+  <div class="flow">
+    <span>Estándar</span><b>→</b><span>Atributo</span><b>→</b><span>Métrica</span><b>→</b><span>Meta</span><b>→</b><span>Prueba</span><b>→</b><span>Resultado</span><b>→</b><span>Decisión</span>
+  </div>
+  <div class="card" style="margin-top:28px">
+    <h3>Ejemplo de aplicación</h3>
+    <p><strong>ISO/IEC 25010 → Seguridad → Cobertura de rutas privadas → Meta 100% → Pruebas de autorización → Resultado medido → Decisión de aprobar, corregir o repetir pruebas.</strong></p>
+  </div>
+  <p style="margin-top:22px">Así, la calidad deja de ser una descripción general y se convierte en un mecanismo objetivo de control del proyecto.</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">08 · Evaluación de calidad</div>
+  <h2>Proceso de medición</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>1. Definir la característica</h3>
+      <p>Seleccionar el atributo de calidad a evaluar: funcionalidad, seguridad, rendimiento, usabilidad, fiabilidad o mantenibilidad.</p>
+    </div>
+    <div class="card">
+      <h3>2. Establecer la métrica</h3>
+      <p>Definir una fórmula o indicador cuantificable que permita medir el comportamiento observado.</p>
+    </div>
+    <div class="card">
+      <h3>3. Ejecutar la medición</h3>
+      <p>Aplicar pruebas y registrar evidencia real del sistema, evitando utilizar valores simulados.</p>
+    </div>
+    <div class="card">
+      <h3>4. Comparar con la meta</h3>
+      <p>Contrastar el resultado obtenido con el criterio de calidad definido y documentar si cumple o requiere mejora.</p>
+    </div>
+  </div>
+  <div class="note">Las métricas permiten convertir la calidad en resultados objetivos y comparables.</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">09 · Conclusión</div>
+  <h2>Calidad medible y verificable</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Valor para SNEAKER POINT</h3>
+      <ul>
+        <li>Permite evaluar objetivamente el software.</li>
+        <li>Facilita la detección de desviaciones y defectos.</li>
+        <li>Relaciona características de calidad con evidencia de pruebas.</li>
+        <li>Permite comparar resultados contra metas definidas.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Resultado esperado</h3>
+      <p>Un proceso de desarrollo donde cada versión se evalúa con criterios cuantificables de funcionalidad, seguridad, rendimiento, usabilidad, fiabilidad y mantenibilidad.</p>
+    </div>
+  </div>
+  <p class="subtitle" style="margin-top:26px"><strong class="accent">La calidad debe medirse:</strong> los estándares proporcionan el marco y las métricas permiten comprobar el nivel de cumplimiento alcanzado por SNEAKER POINT.</p>
+</section>
+
+<div class="nav">
+  <div class="controls">
+    <button id="prev" aria-label="Diapositiva anterior">← Anterior</button>
+    <button id="next" aria-label="Diapositiva siguiente">Siguiente →</button>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <div class="counter" id="counter">1 / 10</div>
+</div>
+
+</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;
+const bar=document.getElementById('bar');
+const counter=document.getElementById('counter');
+function show(n){
+  i=Math.max(0,Math.min(n,slides.length-1));
+  slides.forEach((s,idx)=>s.classList.toggle('active',idx===i));
+  slides[i].scrollTop=0;
+  bar.style.width=((i+1)/slides.length*100)+'%';
+  counter.textContent=(i+1)+' / '+slides.length;
+}
+document.getElementById('next').onclick=()=>show(i+1);
+document.getElementById('prev').onclick=()=>show(i-1);
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1);}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1);}
+  if(e.key==='Home')show(0);
+  if(e.key==='End')show(slides.length-1);
+});
+let touchStart=null;
+document.addEventListener('touchstart', e => {
+  if(e.target.closest('.table-wrap, button')) { touchStart=null; return; }
+  touchStart={x:e.touches[0].clientX,y:e.touches[0].clientY};
+},{passive:true});
+document.addEventListener('touchend', e => {
+  if(!touchStart)return;
+  const dx=e.changedTouches[0].clientX-touchStart.x;
+  const dy=e.changedTouches[0].clientY-touchStart.y;
+  if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.3)
+    show(i+(dx<0?1:-1));
+  touchStart=null;
+},{passive:true});
+show(0);
+</script>
+</body>
+</html>
